@@ -1,15 +1,15 @@
 <template>
-  <div id="app">
-    <router-view></router-view>
+  <div id="app" class="fillcontain">
+    <router-view />
   </div>
 </template>
 
 <script>
-  export default {
-    name: 'vue-electron'
-  }
+export default {
+
+}
 </script>
 
-<style>
-  /* CSS */
+<style lang="less">
+	@import './style/common';
 </style>
