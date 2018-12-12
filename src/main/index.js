@@ -1,33 +1,32 @@
-import { app, BrowserWindow, globalShortcut, dialog, Menu, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, globalShortcut, dialog, Menu, MenuItem, shell, ipcMain, Tray } from 'electron'
+import path from 'path'
+import fs from 'fs'
+import os from 'os'
 
-/**
- * Set `__static` path to static files in production
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
- */
 if (process.env.NODE_ENV !== 'development') {
-  global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+    global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
 
 let mainWindow
-const winURL = process.env.NODE_ENV === 'development'
-  ? `http://localhost:9080`
-  : `file://${__dirname}/index.html`
+const winURL = process.env.NODE_ENV === 'development' ?
+    `http://localhost:9080` :
+    `file://${__dirname}/index.html`
 
-function createWindow () {
-  /**
-   * Initial window options
-   */
-  mainWindow = new BrowserWindow({
-    height: 563,
-    useContentSize: true,
-    width: 1000
-  })
+function createWindow() {
+    /**
+     * Initial window options
+     */
+    mainWindow = new BrowserWindow({
+        height: 563,
+        useContentSize: true,
+        width: 1000
+    })
 
-  mainWindow.loadURL(winURL)
+    mainWindow.loadURL(winURL)
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
+    mainWindow.on('closed', () => {
+        mainWindow = null
+    })
 }
 
 app.on('window-all-closed', () => {
@@ -42,25 +41,44 @@ app.on('activate', () => {
     }
 })
 
-
-app.on('ready', ()=>{
-  createWindow()
-
-  // 快捷键设置
-  globalShortcut.register('CommandOrControl+Q', () => {
-      dialog.showMessageBox({
-          type: 'info',
-          message: '成功!',
-          detail: '测试快捷键功能',
-          buttons: ['好的']
-      })
-  })
-
-  // 自定义菜单
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
-
+app.on('ready', () => {
+    createWindow()
 })
+
+
+// 上下文菜单
+const menu = new Menu()
+menu.append(new MenuItem({ label: 'Hello' }))
+menu.append(new MenuItem({ type: 'separator' }))
+menu.append(new MenuItem({ label: 'Electron', type: 'checkbox', checked: true }))
+
+app.on('browser-window-created', (event, win) => {
+    win.webContents.on('context-menu', (e, params) => {
+        menu.popup(win, params.x, params.y)
+    })
+})
+
+ipcMain.on('show-context-menu', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    menu.popup(win)
+})
+
+
+// 快捷键设置
+app.on('ready', () => {
+    globalShortcut.register('CommandOrControl+Alt+K', () => {
+        dialog.showMessageBox({
+            type: 'info',
+            message: '成功!',
+            detail: '你按下了一个全局注册的快捷键绑定.',
+            buttons: ['好的']
+        })
+    })
+})
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
+})
+
 
 // 打开文件或目录
 ipcMain.on('open-file-dialog', (event) => {
@@ -103,6 +121,65 @@ ipcMain.on('save-dialog', (event) => {
         event.sender.send('saved-file', filename)
     })
 })
+
+
+// 托盘
+let appIcon = null
+ipcMain.on('put-in-tray', (event) => {
+    const iconName = process.platform === 'win32' ? 'windows-icon.png' : 'iconTemplate.png'
+    const iconPath = path.join(__dirname, iconName)
+    appIcon = new Tray(iconPath)
+    const contextMenu = Menu.buildFromTemplate([{
+        label: '移除',
+        click: () => {
+            event.sender.send('tray-removed')
+        }
+    }])
+    appIcon.setToolTip('在托盘中的 Electron 示例.')
+    appIcon.setContextMenu(contextMenu)
+})
+
+ipcMain.on('remove-tray', () => {
+    appIcon.destroy()
+})
+
+app.on('window-all-closed', () => {
+    if (appIcon) appIcon.destroy()
+})
+
+
+// 异步消息
+ipcMain.on('asynchronous-message', (event, arg) => {
+    event.sender.send('asynchronous-reply', 'pong')
+})
+
+// 同步消息
+ipcMain.on('synchronous-message', (event, arg) => {
+    event.returnValue = 'pong'
+})
+
+
+// 获取应用信息
+ipcMain.on('get-app-path', (event) => {
+    event.sender.send('got-app-path', app.getAppPath())
+})
+
+
+// 打印到PDF
+ipcMain.on('print-to-pdf', (event) => {
+    const pdfPath = path.join(os.tmpdir(), 'print.pdf')
+    const win = BrowserWindow.fromWebContents(event.sender)
+    // 使用默认打印参数
+    win.webContents.printToPDF({}, (error, data) => {
+        if (error) throw error
+        fs.writeFile(pdfPath, data, (error) => {
+            if (error) throw error
+            shell.openExternal(`file://${pdfPath}`)
+            event.sender.send('wrote-pdf', pdfPath)
+        })
+    })
+})
+
 
 // 自定义菜单
 let template = [{
@@ -327,6 +404,12 @@ if (process.platform === 'win32') {
     const helpMenu = template[template.length - 1].submenu
     addUpdateMenuItems(helpMenu, 0)
 }
+
+app.on('ready', () => {
+    const menu = Menu.buildFromTemplate(template)
+    Menu.setApplicationMenu(menu)
+
+})
 
 app.on('browser-window-created', () => {
     let reopenMenuItem = findReopenMenuItem()

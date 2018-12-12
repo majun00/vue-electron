@@ -55,6 +55,7 @@
 <script>
 import { login, getAdminInfo } from '@/api/getData'
 import { mapActions, mapState } from 'vuex'
+let trayOn = false
 
 export default {
   data() {
@@ -137,12 +138,36 @@ export default {
     },
 
     submitTest() {
+      const {BrowserWindow} = require('electron').remote
+const path = require('path')
+
+let win
+
+  const modalPath = path.join('file://', __dirname, '../../sections/windows/manage-modal.html')
+  win = new BrowserWindow({ width: 400, height: 275 })
+
+  win.on('resize', updateReply)
+  win.on('move', updateReply)
+  win.on('close', () => { win = null })
+  win.loadURL(modalPath)
+  win.show()
+
+  function updateReply () {
+    const manageWindowReply = document.getElementById('manage-window-reply')
+    const message = `大小: ${win.getSize()} 位置: ${win.getPosition()}`
+    manageWindowReply.innerText = message
+  }
+
       // 新建窗口
       //   const { BrowserWindow } = require('electron').remote
       //   let win = new BrowserWindow({ width: 800, height: 600, frame:false })
       //   win.on('close', () => { win = null })
       //   win.loadURL('https://github.com')
       //   win.show()
+
+      // 上下文菜单
+      // const { ipcRenderer } = require('electron')
+      // ipcRenderer.send('show-context-menu')
 
       // 在文件管理器中打开路径
       //   const { shell } = require('electron')
@@ -152,16 +177,16 @@ export default {
       //   shell.openExternal('http://electron.atom.io')
 
       // 桌面通知
-      //   const path = require('path')
-      //   const notification = {
-      //     title: '通知',
-      //     body: '通知内容',
-      //     icon: path.join(__dirname, '../assets/programming.png')
-      //   }
-      //   const myNotification = new window.Notification(notification.title, notification)
-      //   myNotification.onclick = () => {
-      //     console.log('通知被点击')
-      //   }
+      // const path = require('path')
+      // const notification = {
+      //   title: '通知test',
+      //   body: '通知test内容',
+      //   icon: path.join(__dirname, '../assets/programming.png')
+      // }
+      // const myNotification = new window.Notification(notification.title, notification)
+      // myNotification.onclick = () => {
+      //   console.log('通知被点击')
+      // }
 
       // 打开文件或目录
       //   const { ipcRenderer } = require('electron')
@@ -186,7 +211,100 @@ export default {
       //     console.log(`已选择的路径: ${path}`)
       //   })
 
+      // 托盘
+      // const ipc = require('electron').ipcRenderer
+      // if (trayOn) {
+      //   trayOn = false
+      //   console.log('')
+      //   ipc.send('remove-tray')
+      // } else {
+      //   trayOn = true
+      //   console.log('再次点击示例按钮移除托盘.')
+      //   ipc.send('put-in-tray')
+      // }
+      // // 从图标上下文菜单中删除托盘
+      // ipc.on('tray-removed', function () {
+      //   trayOn = false
+      //   console.log('')
+      //   ipc.send('remove-tray')
+      // })
 
+      // 异步消息
+      // const { ipcRenderer } = require('electron')
+      // ipcRenderer.send('asynchronous-message', 'ping')
+      // ipcRenderer.on('asynchronous-reply', (event, arg) => {
+      //   console.log(`异步消息回复: ${arg}`)
+      // })
+
+      // 同步消息
+      // const { ipcRenderer } = require('electron')
+      // const reply = ipcRenderer.sendSync('synchronous-message', 'ping')
+      // console.log(`同步消息回复: ${reply}`)
+
+      // 与隐藏窗口通信
+
+
+      // 获取应用信息
+      // const { ipcRenderer } = require('electron')
+      // ipcRenderer.send('get-app-path')
+      // ipcRenderer.on('got-app-path', (event, path) => {
+      //   console.log(`当前应用程序位于: ${path}`)
+      // })
+
+      // 获取版本信息
+      // const electronVersion = process.versions.electron
+      // console.log(`当前应用正在使用的 Electron 版本: ${electronVersion}`)
+      // 返回正在使用的 Chromium 版本 process.versions.chrome
+      // 返回正在使用的 V8 版本 process.versions.v8
+      // 返回正在使用的 Node 版本 process.versions.node
+
+      // 获取系统信息
+      // const os = require('os')
+      // const homeDir = os.homedir()
+      // console.log(`当前系统主目录是: ${homeDir}`)
+
+      // 获取屏幕信息
+      // const { screen } = require('electron')
+      // const size = screen.getPrimaryDisplay().size
+      // console.log(`当前屏幕是: ${size.width}px x ${size.height}px`)
+
+      // 打印到PDF
+      // const { ipcRenderer } = require('electron')
+      // ipcRenderer.send('print-to-pdf')
+      // ipcRenderer.on('wrote-pdf', (event, path) => {
+      //   console.log(`PDF 保存到: ${path}`)
+      // })
+
+      // 屏幕截屏
+      // const { desktopCapturer, screen, shell } = require('electron')
+      // const fs = require('fs')
+      // const os = require('os')
+      // const path = require('path')
+      // const thumbSize = determineScreenShotSize()
+      // let options = { types: ['screen'], thumbnailSize: thumbSize }
+
+      // desktopCapturer.getSources(options, (error, sources) => {
+      //   if (error) return console.log(error)
+      //   sources.forEach((source) => {
+      //     if (source.name === 'Entire screen' || source.name === 'Screen 1') {
+      //       const screenshotPath = path.join(os.tmpdir(), 'screenshot.png')
+      //       fs.writeFile(screenshotPath, source.thumbnail.toPNG(), (error) => {
+      //         if (error) return console.log(error)
+      //         shell.openExternal(`file://${screenshotPath}`)
+      //         console.log(`截图保存到: ${screenshotPath}`)
+      //       })
+      //     }
+      //   })
+      // })
+
+      // function determineScreenShotSize() {
+      //   const screenSize = screen.getPrimaryDisplay().workAreaSize
+      //   const maxDimension = Math.max(screenSize.width, screenSize.height)
+      //   return {
+      //     width: maxDimension * window.devicePixelRatio,
+      //     height: maxDimension * window.devicePixelRatio
+      //   }
+      // }
 
     }
   }
