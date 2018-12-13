@@ -138,26 +138,6 @@ export default {
     },
 
     submitTest() {
-      const {BrowserWindow} = require('electron').remote
-const path = require('path')
-
-let win
-
-  const modalPath = path.join('file://', __dirname, '../../sections/windows/manage-modal.html')
-  win = new BrowserWindow({ width: 400, height: 275 })
-
-  win.on('resize', updateReply)
-  win.on('move', updateReply)
-  win.on('close', () => { win = null })
-  win.loadURL(modalPath)
-  win.show()
-
-  function updateReply () {
-    const manageWindowReply = document.getElementById('manage-window-reply')
-    const message = `大小: ${win.getSize()} 位置: ${win.getPosition()}`
-    manageWindowReply.innerText = message
-  }
-
       // 新建窗口
       //   const { BrowserWindow } = require('electron').remote
       //   let win = new BrowserWindow({ width: 800, height: 600, frame:false })
@@ -177,16 +157,16 @@ let win
       //   shell.openExternal('http://electron.atom.io')
 
       // 桌面通知
-      // const path = require('path')
-      // const notification = {
-      //   title: '通知test',
-      //   body: '通知test内容',
-      //   icon: path.join(__dirname, '../assets/programming.png')
-      // }
-      // const myNotification = new window.Notification(notification.title, notification)
-      // myNotification.onclick = () => {
-      //   console.log('通知被点击')
-      // }
+      const path = require('path')
+      const notification = {
+        title: '通知test',
+        body: '通知test内容',
+        icon: path.join(__dirname, '../assets/programming.png')
+      }
+      const myNotification = new window.Notification(notification.title, notification)
+      myNotification.onclick = () => {
+        console.log('通知被点击')
+      }
 
       // 打开文件或目录
       //   const { ipcRenderer } = require('electron')
